@@ -110,7 +110,15 @@ int64_t xmrig::DaemonClient::submit(const JobResult &result)
 #   ifdef XMRIG_PROXY_PROJECT
     memcpy(data + 78, result.nonce, 8);
 #   else
-    Buffer::toHex(reinterpret_cast<const uint8_t *>(&result.nonce), 4, data + 78);
+    int pos = 78;
+    if (m_apiVersion == API_YADA) {
+      auto chrP = strchr(data, '{');
+      if (chrP) {
+        pos = (int) (chrP - data);
+      }
+    }
+
+    Buffer::toHex(reinterpret_cast<const uint8_t *>(&result.nonce), 4, data + pos);
 #   endif
 
     using namespace rapidjson;
@@ -267,7 +275,7 @@ bool xmrig::DaemonClient::parseJob(const rapidjson::Value &params, int *code)
     job.setId(blocktemplate.data() + blocktemplate.size() - 32);
 
     if (m_apiVersion == API_YADA) {
-      job.setTarget(   Json::getString(params, "target"));
+      job.setTarget(Json::getString(params, "target"));
     } else {
       job.setDiff(Json::getUint64(params, "difficulty"));
     }
