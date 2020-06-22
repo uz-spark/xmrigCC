@@ -125,6 +125,10 @@ int64_t xmrig::DaemonClient::submit(const JobResult &result)
         params.PushBack(m_blocktemplate.toJSON(), doc.GetAllocator());
     }
 
+    if (m_apiVersion == API_YADA) {
+      doc.AddMember("wallet_address", m_user.toJSON(), doc.GetAllocator());
+    }
+
     JsonRequest::create(doc, m_sequence, "submitblock", params);
 
 #   ifdef XMRIG_PROXY_PROJECT
@@ -142,7 +146,9 @@ int64_t xmrig::DaemonClient::submit(const JobResult &result)
 void xmrig::DaemonClient::connect()
 {
     if ((m_pool.algorithm() == Algorithm::ASTROBWT_DERO) || (m_pool.coin() == Coin::DERO)) {
-        m_apiVersion = API_DERO;
+      m_apiVersion = API_DERO;
+    } else if ((m_pool.algorithm() == Algorithm::RX_YADA) || (m_pool.coin() == Coin::YADA)) {
+      m_apiVersion = API_YADA;
     }
 
     setState(ConnectingState);
@@ -227,7 +233,7 @@ void xmrig::DaemonClient::onTimer(const Timer *)
             ++m_sequence;
         }
         else {
-            send(HTTP_GET, (m_apiVersion == API_MONERO) ? kGetHeight : kGetInfo);
+            send(HTTP_GET, (m_apiVersion == API_MONERO || m_apiVersion == API_YADA) ? kGetHeight : kGetInfo);
         }
     }
 }
@@ -258,8 +264,13 @@ bool xmrig::DaemonClient::parseJob(const rapidjson::Value &params, int *code)
 
     job.setSeedHash(Json::getString(params, "seed_hash"));
     job.setHeight(Json::getUint64(params, kHeight));
-    job.setDiff(Json::getUint64(params, "difficulty"));
     job.setId(blocktemplate.data() + blocktemplate.size() - 32);
+
+    if (m_apiVersion == API_YADA) {
+      job.setTarget(   Json::getString(params, "target"));
+    } else {
+      job.setDiff(Json::getUint64(params, "difficulty"));
+    }
 
     if (m_pool.coin().isValid()) {
         job.setAlgorithm(m_pool.coin().algorithm(job.blob()[0]));
@@ -267,7 +278,15 @@ bool xmrig::DaemonClient::parseJob(const rapidjson::Value &params, int *code)
 
     m_job           = std::move(job);
     m_blocktemplate = std::move(blocktemplate);
-    m_prevHash      = Json::getString(params, "prev_hash");
+
+    if (m_apiVersion == API_YADA) {
+      if (m_blockhashingblob.size() > 64) {
+        m_prevHash = String(m_blockhashingblob.data() + m_blockhashingblob.size() - 64, 64);
+      }
+    }
+    else{
+      m_prevHash = Json::getString(params, "prev_hash");
+    }
 
     if (m_apiVersion == API_DERO) {
         // Truncate to 32 bytes to have the same data as in get_info RPC
