@@ -100,8 +100,10 @@ bool xmrig::DaemonClient::isTLS() const
 
 
 int64_t xmrig::DaemonClient::submit(const JobResult &result)
-{
-    if (result.jobId != (m_blocktemplate.data() + m_blocktemplate.size() - 32)) {
+{   
+    
+    if (m_apiVersion == API_YADA) {}
+    else if (result.jobId != (m_blocktemplate.data() + m_blocktemplate.size() - 32) ) {
         return -1;
     }
 
@@ -110,15 +112,7 @@ int64_t xmrig::DaemonClient::submit(const JobResult &result)
 #   ifdef XMRIG_PROXY_PROJECT
     memcpy(data + 78, result.nonce, 8);
 #   else
-    int pos = 78;
-    if (m_apiVersion == API_YADA) {
-      auto chrP = strchr(data, '{');
-      if (chrP) {
-        pos = (int) (chrP - data);
-      }
-    }
-
-    Buffer::toHex(reinterpret_cast<const uint8_t *>(&result.nonce), 4, data + pos);
+    Buffer::toHex(reinterpret_cast<const uint8_t *>(&result.nonce), 4, data + 78);
 #   endif
 
     using namespace rapidjson;
@@ -134,7 +128,10 @@ int64_t xmrig::DaemonClient::submit(const JobResult &result)
     }
 
     if (m_apiVersion == API_YADA) {
-      doc.AddMember("wallet_address", m_user.toJSON(), doc.GetAllocator());
+        doc.AddMember("wallet_address", m_user.toJSON(), doc.GetAllocator());
+        std::string s = std::to_string(result.nonce - 1);
+        std::string newnonce = std::string(8 - s.length(), '0') + s;
+        doc.AddMember("nonce", StringRef(newnonce.c_str()), doc.GetAllocator());
     }
 
     JsonRequest::create(doc, m_sequence, "submitblock", params);
@@ -272,11 +269,12 @@ bool xmrig::DaemonClient::parseJob(const rapidjson::Value &params, int *code)
 
     job.setSeedHash(Json::getString(params, "seed_hash"));
     job.setHeight(Json::getUint64(params, kHeight));
-    job.setId(blocktemplate.data() + blocktemplate.size() - 32);
 
     if (m_apiVersion == API_YADA) {
+      job.setId(blocktemplate.data());
       job.setTarget(Json::getString(params, "target"));
     } else {
+      job.setId(blocktemplate.data() + blocktemplate.size() - 32);
       job.setDiff(Json::getUint64(params, "difficulty"));
     }
 
