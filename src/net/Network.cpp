@@ -265,12 +265,22 @@ void xmrig::Network::onUpdateRequest(ClientStatus& clientStatus)
 void xmrig::Network::setJob(IClient *client, const Job &job, bool donate)
 {
     if (job.height()) {
-        LOG_INFO("%s " MAGENTA_BOLD("new job") " from " WHITE_BOLD("%s:%d") " diff " WHITE_BOLD("%" PRIu64) " algo " WHITE_BOLD("%s") " height " WHITE_BOLD("%" PRIu64),
-                 tag, client->pool().host().data(), client->pool().port(), job.diff(), job.algorithm().shortName(), job.height());
+        if (job.algorithm() == Algorithm::RX_YADA) {
+            LOG_INFO("%s " MAGENTA_BOLD("new job") " from " WHITE_BOLD("%s:%d") " target " WHITE_BOLD("%016" PRIx64) " algo " WHITE_BOLD("%s") " height " WHITE_BOLD("%" PRIu64),
+                    tag, client->pool().host().data(), client->pool().port(), job.target(), job.algorithm().shortName(), job.height());
+        } else {
+            LOG_INFO("%s " MAGENTA_BOLD("new job") " from " WHITE_BOLD("%s:%d") " diff " WHITE_BOLD("%" PRIu64) " algo " WHITE_BOLD("%s") " height " WHITE_BOLD("%" PRIu64),
+                    tag, client->pool().host().data(), client->pool().port(), job.diff(), job.algorithm().shortName(), job.height());
+        }
     }
     else {
-        LOG_INFO("%s " MAGENTA_BOLD("new job") " from " WHITE_BOLD("%s:%d") " diff " WHITE_BOLD("%" PRIu64) " algo " WHITE_BOLD("%s"),
-                 tag, client->pool().host().data(), client->pool().port(), job.diff(), job.algorithm().shortName());
+        if (job.algorithm() == Algorithm::RX_YADA) {
+            LOG_INFO("%s " MAGENTA_BOLD("new job") " from " WHITE_BOLD("%s:%d") " target " WHITE_BOLD("%016" PRIx64) " algo " WHITE_BOLD("%s"),
+                    tag, client->pool().host().data(), client->pool().port(), job.target(), job.algorithm().shortName());
+        } else {
+            LOG_INFO("%s " MAGENTA_BOLD("new job") " from " WHITE_BOLD("%s:%d") " diff " WHITE_BOLD("%" PRIu64) " algo " WHITE_BOLD("%s"),
+                    tag, client->pool().host().data(), client->pool().port(), job.diff(), job.algorithm().shortName());
+        }
     }
 
     if (!donate && m_donate) {
