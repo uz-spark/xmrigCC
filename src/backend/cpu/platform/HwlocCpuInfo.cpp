@@ -269,15 +269,8 @@ xmrig::CpuThreads xmrig::HwlocCpuInfo::threads(const Algorithm &algorithm, uint3
 void xmrig::HwlocCpuInfo::processTopLevelCache(hwloc_obj_t cache, const Algorithm &algorithm, CpuThreads &threads, size_t limit) const
 {
     constexpr size_t oneMiB = 1024U * 1024U;
-    auto coreType = HWLOC_OBJ_PU;
 
-#   ifdef XMRIG_ALGO_RANDOMX
-    if (algorithm == Algorithm::RX_XLA) {
-      coreType = HWLOC_OBJ_CORE;
-    }
-#   endif
-
-    size_t PUs = countByType(cache, coreType);
+    size_t PUs = countByType(cache, HWLOC_OBJ_PU);
     if (PUs == 0) {
         return;
     }
@@ -349,9 +342,16 @@ void xmrig::HwlocCpuInfo::processTopLevelCache(hwloc_obj_t cache, const Algorith
 
     if (cacheHashes >= PUs) {
         for (hwloc_obj_t core : cores) {
-            const std::vector<hwloc_obj_t> units = findByType(core, coreType);
+            const std::vector<hwloc_obj_t> units = findByType(core, HWLOC_OBJ_PU);
             for (hwloc_obj_t pu : units) {
-                threads.add(pu->os_index, intensity);
+#   ifdef XMRIG_ALGO_RANDOMX
+              if (algorithm == Algorithm::RX_XLA) {
+                if (core->first_child != pu) {
+                  continue;
+                }
+              }
+#   endif
+              threads.add(pu->os_index, intensity);
             }
         }
 
@@ -363,10 +363,18 @@ void xmrig::HwlocCpuInfo::processTopLevelCache(hwloc_obj_t cache, const Algorith
         bool allocated_pu = false;
 
         for (hwloc_obj_t core : cores) {
-            const std::vector<hwloc_obj_t> units = findByType(core, coreType);
+            const std::vector<hwloc_obj_t> units = findByType(core, HWLOC_OBJ_PU);
             if (units.size() <= pu_id) {
                 continue;
             }
+
+#   ifdef XMRIG_ALGO_RANDOMX
+           if (algorithm == Algorithm::RX_XLA) {
+             if (core->first_child != units[pu_id]) {
+               continue;
+             }
+           }
+#   endif
 
             cacheHashes--;
             PUs--;
