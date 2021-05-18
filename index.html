@@ -182,6 +182,7 @@
                     {data: "client_status.hash_factor", className: "right", visible: false},
                     {data: "client_status.total_pages", className: "right", visible: false},
                     {data: "client_status.total_hugepages", className: "right", visible: false},
+                    {data: null, render: clientHPpercent, className: "right", visible: false},
                     {data: "client_status.free_memory", render: memory, className: "right", visible: false},
                     {data: "client_status.total_memory", render: memory, className: "right", visible: false},
                     {data: "client_status.current_threads", className: "right", visible: false},
@@ -404,7 +405,7 @@
                     var sumSharesGood = 0;
                     var sumSharedTotal = 0;
 
-                    var colOffset = 28;
+                    var colOffset = 29;
 
                     sumHashrateShort = api
                         .column(colOffset, {page: 'current'})
@@ -911,6 +912,11 @@
                 updateCharts(hashrateChart, minerChart);
             }, CHART_RELOAD_INTERVAL_IN_MS);
         });
+        
+        function clientHPpercent(data, type, row) {
+            if (row.client_status.total_pages == 0) return "N/A";
+            return Math.round(1000 * row.client_status.total_hugepages / row.client_status.total_pages) / 10;
+        }
 
         function sendAction(action, clientId, payload) {
             $.ajax({
@@ -1255,6 +1261,7 @@
             <th>Hashfactor</th>
             <th>Total Pages</th>
             <th>Total Hugepages</th>
+            <th>Hugepages %</th>
             <th>Free Memory (GB)</th>
             <th>Total Memory (GB)</th>
             <th>Used Threads</th>
@@ -1286,6 +1293,7 @@
         <tr>
             <th class="center" width="2%"><i class="fa fa-square-o" id="selectAllBottom"></i></th>
             <th class="left">Total:</th>
+            <th></th>
             <th></th>
             <th></th>
             <th></th>
