@@ -915,6 +915,7 @@
         
         function clientHPpercent(data, type, row) {
             if (row.client_status.total_pages == 0) return "N/A";
+			if (!row.client_status.hugepages_enabled) return "disabled";
             return Math.round(1000 * row.client_status.total_hugepages / row.client_status.total_pages) / 10;
         }
 
