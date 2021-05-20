@@ -914,8 +914,8 @@
         });
         
         function clientHPpercent(data, type, row) {
-            if (row.client_status.total_pages == 0) return "UNK";
-	    if (!row.client_status.hugepages_available) return "N/A";
+	    if (!row.client_status.hugepages_available) return "disabled";
+	    if (!row.client_status.hugepages_enabled || row.client_status.total_pages == 0) return 0;
             return Math.round(1000 * row.client_status.total_hugepages / row.client_status.total_pages) / 10;
         }
 
