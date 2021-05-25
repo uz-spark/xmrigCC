@@ -1082,7 +1082,30 @@
         }
 
         function round(data, type, row) {
-            return Math.round(data * 100) / 100;
+            if (data == 0) return 0;
+            var roundError = 5 / 1000;
+            var roundTo = data * roundError * 2;
+            if (roundTo > 50) {
+                if (roundTo > 5000) {
+                    if (roundTo > 100000) {data = Math.round(data / 100000) * 100000
+                    } else if (roundTo > 50000) {data = Math.round(data / 50000) * 50000
+                    } else if (roundTo > 10000) {data = Math.round(data / 10000) * 10000
+                    } else data = Math.round(data / 5000) * 5000;
+                } else if (roundTo > 1000) {data = Math.round(data / 1000) * 1000
+                } else if (roundTo > 500) {data = Math.round(data / 500) * 500
+                } else if (roundTo > 100) {data = Math.round(data / 100) * 100
+                } else data = Math.round(data / 50) * 50;
+            } else if (roundTo > 0.5) {
+                if (roundTo > 10) {data = Math.round(data / 10) * 10
+                } else if (roundTo > 5) {data = Math.round(data / 5) * 5
+                } else if (roundTo > 1) {data = Math.round(data)
+                } else data = Math.round(data * 2) / 2;
+            } else if (roundTo > 0.1) {data = Math.round(data * 10) / 10
+            } else if (roundTo > 0.05) {data = Math.round(data * 50) / 50
+            } else if (roundTo > 0.01) {data = Math.round(data * 100) / 100
+            } else if (roundTo > 0.005) {data = Math.round(data * 500) / 500
+            } else data = Math.round(data * 1000) / 1000;
+            return data;
         }
 
         function memory(data, type, row) {
