@@ -202,6 +202,7 @@
                     {data: "client_status.avg_time", className: "right"},
                     {data: "client_status.shares_good", className: "right"},
                     {data: "client_status.shares_total", className: "right"},
+                    {data: null, render: clientBadSharesPercent},
                     {data: "client_status.uptime", render: uptime, className: "right"},
                     {data: "client_status.last_status_update", render: laststatus},
                     {
@@ -404,6 +405,7 @@
                     var avgTimeTotal = 0;
                     var sumSharesGood = 0;
                     var sumSharedTotal = 0;
+                    var avgBadSharesPercent = 0;
 
                     var colOffset = 29;
 
@@ -468,6 +470,7 @@
                     sumHashrateLong = round(sumHashrateLong);
                     sumHashrateHighest = round(sumHashrateHighest);
                     avgTimeTotal = round(avgTimeTotal);
+                    if (sumSharedTotal > 0) avgBadSharesPercent = round((sumSharedTotal - sumSharesGood) / sumSharedTotal * 100000) / 1000;
 
                     // update footer
                     $(api.column(colOffset).footer()).html(sumHashrateShort);
@@ -478,6 +481,7 @@
                     $(api.column(colOffset+5).footer()).html(avgTimeTotal);
                     $(api.column(colOffset+6).footer()).html(sumSharesGood);
                     $(api.column(colOffset+7).footer()).html(sumSharedTotal);
+                    $(api.column(colOffset+8).footer()).html(avgBadSharesPercent);
                 }
             });
 
@@ -918,6 +922,11 @@
             return Math.round(1000 * row.client_status.total_hugepages / row.client_status.total_pages) / 10;
         }
 
+        function clientBadSharesPercent(data, type, row) {
+            if (row.client_status.shares_total == 0) return 0;
+            return Math.round(10000 * (row.client_status.shares_total - row.client_status.shares_good) / row.client_status.shares_total) / 100;
+        }    
+	    
         function sendAction(action, clientId, payload) {
             $.ajax({
                 type: "POST",
@@ -1283,6 +1292,7 @@
 
             <th>Shares Good</th>
             <th>Shares Total</th>
+            <th>Shares Bad %</th>
             <th>Uptime</th>
             <th>Last Update</th>
             <th>Log</th>
@@ -1293,6 +1303,7 @@
         <tr>
             <th class="center" width="2%"><i class="fa fa-square-o" id="selectAllBottom"></i></th>
             <th class="left">Total:</th>
+            <th></th>
             <th></th>
             <th></th>
             <th></th>
