@@ -470,7 +470,7 @@
                     sumHashrateLong = round(sumHashrateLong);
                     sumHashrateHighest = round(sumHashrateHighest);
                     avgTimeTotal = round(avgTimeTotal);
-                    if (sumSharedTotal > 0) avgBadSharesPercent = round((sumSharedTotal - sumSharesGood) / sumSharedTotal * 100000) / 1000;
+                    if (sumSharedTotal > 0) avgBadSharesPercent = Math.round((sumSharedTotal - sumSharesGood) / sumSharedTotal * 100000) / 1000;
 
                     // update footer
                     $(api.column(colOffset).footer()).html(sumHashrateShort);
